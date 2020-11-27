@@ -101,7 +101,6 @@ __config_proxy() {
 
 __getLANip() {
 	__hostip=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
-	__wslip=$(hostname -I | awk '{print $1}')
 }
 
 __showLANip() {
@@ -110,9 +109,6 @@ __showLANip() {
 	echo -n "host_IP: "
 	echo "${__hostip}"
 	echo "========================================"
-	echo "Check what your current wsl2 IP is"
-	echo -n "wsl_IP: "
-	echo "${__wslip}"
 }
 
 __check_whether_wsl2() {
