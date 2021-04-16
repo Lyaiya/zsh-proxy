@@ -34,20 +34,27 @@ __check_ip() {
 	echo "========================================"
 	echo "Check what your IP is"
 	echo "----------------------------------------"
-	echo -n "IPv4: "
-	curl -s -k https://api-ipv4.ip.sb/ip
-	echo "----------------------------------------"
-	echo -n "IPv6: "
-	curl -s -k https://api-ipv6.ip.sb/ip
-
-	if command -v python >/dev/null; then
-		echo ""
-		echo "----------------------------------------"
-		echo "Info: "
-		curl -s -k https://api.ip.sb/geoip | python -m json.tool
-		echo ""
+	ipv4=$(curl -s -k https://api-ipv4.ip.sb/ip)
+	if [[ "$ipv4" != "" ]]; then
+		echo "IPv4: $ipv4"
+	else
+		echo "IPv4: -"
 	fi
-
+	echo "----------------------------------------"
+	ipv6=$(curl -s -k -m10 https://api-ipv6.ip.sb/ip)
+	if [[ "$ipv6" != "" ]]; then
+		echo "IPv6: $ipv6"
+	else
+		echo "IPv6: -"
+	fi
+	if command -v python >/dev/null; then
+		geoip=$(curl -s -k https://api.ip.sb/geoip)
+		if [[ "$geoip" != "" ]]; then
+			echo "----------------------------------------"
+			echo "Info: "
+			echo "$geoip" | python -m json.tool
+		fi
+	fi
 	echo "========================================"
 }
 
@@ -218,7 +225,7 @@ __enable_proxy_all() {
 	export HTTP_PROXY="${__ZSHPROXY_HTTP}"
 	# https_proxy
 	export https_proxy="${__ZSHPROXY_HTTP}"
-	export HTTPS_proxy="${__ZSHPROXY_HTTP}"
+	export HTTPS_PROXY="${__ZSHPROXY_HTTP}"
 	# ftp_proxy
 	export ftp_proxy="${__ZSHPROXY_HTTP}"
 	export FTP_PROXY="${__ZSHPROXY_HTTP}"
@@ -243,6 +250,7 @@ __disable_proxy_all() {
 	unset RSYNC_PROXY
 	unset ALL_PROXY
 	unset all_proxy
+	unset no_proxy
 }
 
 # Proxy for Git
@@ -338,12 +346,15 @@ __auto_proxy() {
 }
 
 __zsh_proxy_update() {
-	__NOW_PATH=$(cd `dirname $0`; pwd)
-	cd "$HOME/.oh-my-zsh/custom/plugins/zsh-proxy"
+	__NOW_PATH=$(
+		cd "$(dirname "$0")" || exit
+		pwd
+	)
+	cd "$HOME/.oh-my-zsh/custom/plugins/zsh-proxy" || exit
 	git fetch --all
 	git reset --hard origin/master
-	source ~/.zshrc
-	cd ${__NOW_PATH}
+	source "$HOME/.zshrc"
+	cd "${__NOW_PATH}" || exit
 }
 
 # ==================================================
